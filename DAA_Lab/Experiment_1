@@ -1,0 +1,43 @@
+#Experiment1 - For given set S1 = (SI, S2,...,Sn; and S2 = / Sl, S2,..,Sn ¿of n positive integers, design and implement an algorithm to find Union and Intersection of the sets and compute its time complexity.
+
+def union_intersection_simple(s1,s2):
+    union_list = []
+    intersection_list = []
+    #hash set for O(1) avg lookup
+    seen_in_s1 = set()
+
+    for num in s1:
+        if num not in seen_in_s1:
+            union_list.append(num)
+            seen_in_s1.add(num)
+
+    for num in s2:
+        if num in seen_in_s1:
+            #it's an intersection , checking for duplicates
+            if num not in intersection_list:
+                intersection_list.append(num)
+        else:
+            #only in s2, add to union
+            if num not in union_list:
+                union_list.append(num)
+                #adding to seen , so we dont add again to union
+                seen_in_s1.add(num)
+
+    return union_list,intersection_list
+
+set1 = {2,4,2,53,32,1,6}
+set2 = {2,5,7,33,22,23,1}
+
+u , i = union_intersection_simple(set1,set2)
+print(f"Union: {u}")
+print(f"Intersection: {i}")
+        
+'''
+Time complexity = O(n+m)
+Space complexity = O(n)
+CORE LOGIC:
+1. Dump all unique elements of S1 into a Hash Set ('seen') AND the Union list.
+2. Iterate through S2. 
+   - If S2 element is IN the 'seen' set -> It's an Intersection.
+   - If S2 element is NOT IN the set -> Add it to the Union.
+'''
