@@ -1,0 +1,101 @@
+from collections import defaultdict
+
+class Graph:
+    def __init__(self, vertices):
+        self.V = vertices
+        # Use a dictionary of lists to represent the adjacency list
+        self.graph = defaultdict(list)
+
+    def add_edge(self, u, v):
+        self.graph[u].append(v)
+        self.graph[v].append(u)
+
+    def print_approximate_vertex_cover(self):
+        # Array to keep track of which vertices have a "guard"
+        # We also use this to track which vertices' edges have been "covered"
+        visited = [False] * self.V
+
+        # Step 1: Iterate through all vertices to find an uncovered edge
+        for u in range(self.V):
+            
+            # If vertex 'u' doesn't have a guard, let's look at its edges
+            if not visited[u]:
+                
+                # Check all vertices 'v' connected to 'u'
+                for v in self.graph[u]:
+                    
+                    # Step 2 & 3: If we find an edge (u, v) where NEITHER side has a guard...
+                    if not visited[v]:
+                        
+                        # Step 4: Add guards to BOTH ends of the edge!
+                        visited[u] = True
+                        visited[v] = True
+                        
+                        # Break out of the inner loop because 'u' is now guarded,
+                        # so all its other edges are implicitly covered.
+                        break
+        
+        # Collect and print the final Vertex Cover
+        cover = []
+        for i in range(self.V):
+            if visited[i]:
+                cover.append(i)
+                
+        print(f"Approximate Vertex Cover includes vertices: {cover}")
+        print(f"Total vertices in cover: {len(cover)}")
+
+# --- Driver Code ---
+"""
+Let's build this graph:
+   (0)      (3)
+    |      / | \
+    |     /  |  \
+   (1)---(2)(4)-(5)
+          \  |
+           \ |
+            (6)
+"""
+g = Graph(7)
+g.add_edge(0, 1)
+g.add_edge(1, 2)
+g.add_edge(2, 3)
+g.add_edge(2, 6)
+g.add_edge(3, 4)
+g.add_edge(3, 5)
+g.add_edge(4, 5)
+g.add_edge(4, 6)
+
+g.print_approximate_vertex_cover()
+
+'''
+The Problem: Given an undirected graph G(V,E), implement a 2-approximation algorithm to find a vertex cover. Analyze the quality of the approximate solution compared to the optimal solution.
+1. Theory: The "Unsolvable" Problem
+
+Imagine a museum with hallways (edges) and intersections (vertices). You need to place security guards at the intersections so that every single hallway can be seen by at least one guard. That set of guarded intersections is a Vertex Cover.
+
+Ideally, you want to hire the absolute minimum number of guards possible (the Minimum Vertex Cover). Here is the catch: finding the absolute mathematical minimum for a large graph is an NP-Complete problem. In computer science, that means there is no known algorithm that can find the perfect answer efficiently (in polynomial time). If you try to calculate it perfectly, the sun will explode before your computer finishes running the calculations on a massive graph.
+
+The Solution: Approximation
+Since we can't find the perfect answer fast, we settle for a "good enough" answer really fast. The 2-Approximation Algorithm is a greedy approach that guarantees it will find a vertex cover that is, at worst, exactly twice as large as the perfect minimum. (If the perfect minimum is 5 guards, our algorithm will hire no more than 10).
+2. The Approach (The Greedy Edge-Picker)
+
+The logic is brutally simple:
+
+    Start with an empty set of guards.
+
+    Look at the graph and randomly pick any edge (hallway) that doesn't have a guard watching it yet.
+
+    Place a guard at both ends of that edge (add both vertices to your cover).
+
+    Since those two guards are now stationed, cross off all edges connected to them—they are now safely watched.
+
+    Repeat steps 2-4 until every edge in the whole graph is crossed off.
+
+    Complexity & Quality Analysis
+
+    Time Complexity: O(V+E). We only iterate through the vertices and their adjacent edges once. This is lightning fast compared to the exponential time required to find the true minimum.
+
+    Space Complexity: O(V) to store the visited array which keeps track of our cover.
+
+    Quality Analysis (The Exam Question): Why is it a 2-approximation? Because every time we pick an edge, we add two vertices to our cover. In the absolute best-case scenario, the perfect solution might only need one of those vertices to cover that specific edge. Because we blindly add both just to be safe, we are adding at most twice the number of vertices the optimal solution would use.
+'''

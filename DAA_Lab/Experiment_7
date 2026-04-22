@@ -1,0 +1,90 @@
+# Number of vertices in the graph
+V = 4
+
+# Define infinity as a very large number
+INF = float('inf')
+
+def floyd_warshall(graph):
+    # Create a 2D array (matrix) to store the shortest path distances.
+    # We initialize it by copying the input graph.
+    dist = list(map(lambda i: list(map(lambda j: j, i)), graph))
+
+    # Phase 1: k is the intermediate vertex
+    for k in range(V):
+        # Phase 2: i is the source vertex
+        for i in range(V):
+            # Phase 3: j is the destination vertex
+            for j in range(V):
+                # Core DP Logic: 
+                # If path through 'k' is shorter than direct path, update it!
+                if dist[i][k] + dist[k][j] < dist[i][j]:
+                    dist[i][j] = dist[i][k] + dist[k][j]
+
+    print_solution(dist)
+
+def print_solution(dist):
+    print("Following matrix shows the shortest distances between every pair of vertices:")
+    for i in range(V):
+        row = []
+        for j in range(V):
+            if dist[i][j] == INF:
+                row.append("INF")
+            else:
+                row.append(str(dist[i][j]))
+        # Formatting for a clean grid output
+        print("\t".join(row))
+
+# --- Driver Code ---
+"""
+Let's create a weighted graph:
+      10
+(0)------->(3)
+ |         /|\
+5|          |
+ |          | 1
+\|/         |
+(1)------->(2)
+      3           
+"""
+
+# The adjacency matrix representation:
+# Use INF for nodes that don't have a direct edge connecting them.
+graph = [
+    [0, 5, INF, 10],
+    [INF, 0, 3, INF],
+    [INF, INF, 0, 1],
+    [INF, INF, INF, 0]
+]
+
+# Run the algorithm
+floyd_warshall(graph)
+
+'''
+Theory: The "All-Pairs" Champion
+
+So far, you might have heard of Dijkstra's algorithm. Dijkstra is great, but it's a Single-Source algorithm (it finds the shortest path from one specific city to all others).
+
+The Floyd-Warshall algorithm is an All-Pairs shortest path algorithm. It calculates the shortest possible distance between every single pair of vertices in a given graph. Like the Longest Common Subsequence we did earlier, Floyd-Warshall uses Dynamic Programming.
+2. The Approach (The "Intermediate" Vertex)
+
+The core logic of Floyd-Warshall is brilliantly simple. It asks one question repeatedly:
+"Can I get from vertex i to vertex j faster if I take a detour through an intermediate vertex k?"
+
+    We start with a 2D distance matrix. If there is a direct edge between i and j, we put its weight in the matrix. If there is no direct edge, we put Infinity (∞). The diagonal is 0 (distance from a node to itself).
+
+    We pick a vertex k to act as our "detour" or "intermediate" city.
+
+    We look at every possible pair of source (i) and destination (j) cities.
+
+    We check the math: Is the distance of (i→k)+(k→j) strictly less than the currently known distance of (i→j)?
+
+    If yes, we update our matrix with the new, shorter distance.
+
+    We repeat this process, making every single vertex in the graph act as vertex k one by one.
+
+Complexity Analysis
+
+    Time Complexity: O(V3) where V is the number of vertices. Look at the code: there are three nested for loops, each running V times. While O(V3) sounds slow, the constants are very small and the loop is incredibly tight, making it the best choice for dense graphs (graphs with lots of edges).
+
+    Space Complexity: O(V2). We need a 2D matrix of size V×V to store the distances between all pairs.
+'''

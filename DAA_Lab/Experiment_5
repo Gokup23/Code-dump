@@ -1,0 +1,112 @@
+class HamiltonianCycle:
+    def __init__(self, num_vertices):
+        self.V = num_vertices
+        # Initialize an empty adjacency matrix with 0s
+        self.graph = [[0 for column in range(num_vertices)] 
+                      for row in range(num_vertices)]
+        self.cycles = [] # To store all found cycles
+
+    def is_safe(self, v, pos, path):
+        # 1. Check if this vertex is adjacent to the previously added vertex
+        if self.graph[path[pos - 1]][v] == 0:
+            return False
+
+        # 2. Check if the vertex has already been visited (is in the path)
+        if v in path:
+            return False
+
+        return True
+
+    def find_cycles_util(self, path, pos):
+        # BASE CASE: If all vertices are included in the path
+        if pos == self.V:
+            # Check if there is an edge from the last vertex back to the first
+            if self.graph[path[pos - 1]][path[0]] == 1:
+                # Cycle found! Let's format it for printing
+                complete_cycle = list(path)
+                complete_cycle.append(path[0]) # Add start node to the end
+                self.cycles.append(complete_cycle)
+            return
+
+        # Try different vertices as the next candidate in the cycle
+        for v in range(1, self.V):
+            if self.is_safe(v, pos, path):
+                path[pos] = v # Add vertex to path
+                
+                # Recurse to build the rest of the path
+                self.find_cycles_util(path, pos + 1)
+                
+                # BACKTRACKING STEP: 
+                # Remove current vertex from path to try other combinations
+                path[pos] = -1
+
+    def find_all_cycles(self):
+        # Initialize path array with -1 (meaning empty)
+        path = [-1] * self.V
+        
+        # We can always start the cycle from vertex 0
+        path[0] = 0 
+
+        # Start the recursive utility function from position 1
+        self.find_cycles_util(path, 1)
+
+        # Print results
+        if not self.cycles:
+            print("No Hamiltonian Cycle exists in this graph.")
+        else:
+            print(f"Found {len(self.cycles)} Hamiltonian Cycle(s):")
+            for cycle in self.cycles:
+                print(" -> ".join(map(str, cycle)))
+
+# --- Driver Code ---
+"""
+Let's test it on this graph:
+   (0)---(1)---(2)
+    |   / \     |
+    |  /   \    |
+    | /     \   |
+   (3)-------(4)
+"""
+g = HamiltonianCycle(5)
+g.graph = [
+    [0, 1, 0, 1, 0],
+    [1, 0, 1, 1, 1],
+    [0, 1, 0, 0, 1],
+    [1, 1, 0, 0, 1],
+    [0, 1, 1, 1, 0]
+]
+
+g.find_all_cycles()
+
+'''
+Hamiltonian Path: A path in an undirected graph that visits every single vertex exactly once.
+
+    Hamiltonian Cycle (or Circuit): A Hamiltonian Path that is a closed loop. Meaning, there is an edge from the very last visited vertex back to the starting vertex.
+
+    Backtracking: Imagine you are in a maze. You pick a path. If you hit a dead end, you don't start the whole maze over—you just backtrack to the last intersection and try a different path. That's exactly what our algorithm does. It tries to build a cycle vertex by vertex. If it realizes a cycle isn't possible from the current path, it undoes its last step (backtracks) and tries another vertex.
+
+2. The Approach
+
+    Represent the Graph: We use an Adjacency Matrix (a 2D array). If graph[i][j] == 1, there is an edge between vertex i and vertex j.
+
+    The Path Array: We keep an array called path[] to store the sequence of vertices we are visiting.
+
+    The Recursive Logic (The "Explore" Step): * Start at vertex 0.
+
+        Look at all other vertices (1 to N-1).
+
+        Before adding a vertex V to our path, we check two things: Is it adjacent to the previous vertex we visited? And is it unvisited (not already in our path array)?
+
+        If it passes the check, add V to the path and recursively try to find the next vertex.
+
+    The Backtrack Step: If we add a vertex but it eventually leads to a dead end, we remove it from path[] and try the next available option.
+
+    The Base Case: If our path[] contains all n vertices, we do one final check: is there an edge between the last vertex in our path and the starting vertex (0)? If yes, we print the cycle! Since the question asks for all cycles, we then backtrack to find more.
+
+    Complexity Analysis
+
+    Time Complexity: O(N!) (N factorial). In the worst-case scenario (like a completely connected graph where every node connects to every node), the algorithm explores every single permutation of vertices. This is highly inefficient for massive graphs, but backtracking ensures we skip a lot of dead ends early on, making it much faster in practice than a blind brute-force approach.
+
+    Space Complexity: O(N). We need space for the path array of size N, and the recursive call stack will go at most N levels deep.
+    
+'''

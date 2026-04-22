@@ -1,0 +1,80 @@
+import random
+
+# Standard partition logic (Lomuto partition scheme)
+def partition(arr, low, high):
+    pivot = arr[high]  # The pivot is now whatever was swapped to the end
+    i = low - 1        # Pointer for elements smaller than pivot
+
+    for j in range(low, high):
+        # If current element is smaller than or equal to pivot
+        if arr[j] <= pivot:
+            i = i + 1
+            # Swap arr[i] and arr[j]
+            arr[i], arr[j] = arr[j], arr[i]
+
+    # Finally, swap the pivot element into its correct sorted position (i + 1)
+    arr[i + 1], arr[high] = arr[high], arr[i + 1]
+    
+    # Return the index where the pivot is now sitting
+    return i + 1
+
+# The randomized twist
+def randomized_partition(arr, low, high):
+    # 1. Pick a random index between low and high (inclusive)
+    rand_pivot_index = random.randint(low, high)
+    
+    # 2. Swap that random element with the last element
+    arr[rand_pivot_index], arr[high] = arr[high], arr[rand_pivot_index]
+    
+    # 3. Now perform the standard partition
+    return partition(arr, low, high)
+
+def randomized_quick_sort(arr, low, high):
+    if low < high:
+        # pi is the partitioning index, arr[pi] is now in its final sorted place
+        pi = randomized_partition(arr, low, high)
+
+        # Separately sort the elements before and after the partition
+        randomized_quick_sort(arr, low, pi - 1)
+        randomized_quick_sort(arr, pi + 1, high)
+
+# --- Driver Code ---
+arr = [10, 7, 8, 9, 1, 5]
+n = len(arr)
+
+print(f"Original Array: {arr}")
+randomized_quick_sort(arr, 0, n - 1)
+print(f"Sorted Array:   {arr}")
+
+'''
+Standard Quick Sort is famous for being incredibly fast. It's a Divide and Conquer algorithm that works by picking a "pivot" element, moving all smaller numbers to its left and all larger numbers to its right (a process called partitioning), and then recursively doing the same thing to the left and right sides.
+
+The Fatal Flaw of Standard Quick Sort: Usually, people just pick the very first or the very last element as the pivot. But what if the array is already sorted (or reverse sorted)? If you always pick the last element as the pivot in a sorted array, the "partition" doesn't divide the array in half at all; it just separates the pivot from the rest of the elements. This drops the speed from blazingly fast to painfully slow O(N2). Hackers can actually exploit this by feeding servers specifically crafted data to trigger this slow-down (a Denial of Service attack).
+
+The Randomized Solution:
+How do we fix it? We introduce chaos. Instead of blindly picking the last element, we generate a random number and pick a random element to be our pivot. By choosing randomly, we make it statistically nearly impossible for the algorithm to get stuck in that worst-case O(N2) scenario, no matter what kind of tricky data is fed into it.
+2. The Approach
+
+    Random Partition: * Generate a random index between the current low and high bounds.
+
+        Take the element at that random index and swap it with the element at the high index (the very end of your current sub-array).
+
+        Now, just run the standard partition logic, knowing your "end" element was actually randomly selected!
+
+    Standard Partition: Loop through the array, moving elements smaller than the pivot to the left side using a swapping pointer.
+
+    Recursion: Call the sort function on the sub-array to the left of the newly placed pivot, and the sub-array to the right.
+
+
+Complexity Analysis
+
+Let N be the number of elements in the array.
+
+    Time Complexity:
+
+        Average/Expected Case: O(NlogN). Because we pick randomly, we mathematically expect the pivot to split the array roughly in half most of the time, leading to highly efficient recursion.
+
+        Worst Case: O(N2). This technically can still happen if your random number generator is incredibly unlucky and continually picks the absolute largest or smallest element every single time. However, the probability of this happening on a large array is astronomically low.
+
+    Space Complexity: O(logN). This is the auxiliary space required for the recursive function call stack. Quick Sort sorts the array in-place (it doesn't create new arrays like Merge Sort does).
+'''

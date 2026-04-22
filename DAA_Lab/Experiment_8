@@ -1,0 +1,148 @@
+def search_rabin_karp(pat, txt, q=101):
+    # d is the number of characters in the input alphabet (ASCII)
+    d = 256 
+    m = len(pat)
+    n = len(txt)
+    p = 0    # hash value for pattern
+    t = 0    # hash value for txt window
+    h = 1
+
+    # The value of h would be "pow(d, m-1)%q"
+    for i in range(m-1):
+        h = (h * d) % q
+
+    # Calculate the hash value of pattern and first window of text
+    for i in range(m):
+        p = (d * p + ord(pat[i])) % q
+        t = (d * t + ord(txt[i])) % q
+
+    # Slide the pattern over text one by one
+    for i in range(n - m + 1):
+        # If the hash values match, then only check characters one by one
+        if p == t:
+            match = True
+            for j in range(m):
+                if txt[i + j] != pat[j]:
+                    match = False
+                    break
+            
+            # If all characters matched (no collision fake-out)
+            if match:
+                print(f"Rabin-Karp: Pattern found at index {i}")
+
+        # Calculate hash value for next window of text
+        if i < n - m:
+            # Remove leading digit, add trailing digit
+            t = (d * (t - ord(txt[i]) * h) + ord(txt[i + m])) % q
+            
+            # We might get negative value of t, converting it to positive
+            if t < 0:
+                t = t + q
+-----------------------------------------------------------------
+NO_OF_CHARS = 256
+
+def get_next_state(pat, m, state, x):
+    # If the character 'x' matches the pattern at the current state, 
+    # we successfully move to the next state!
+    if state < m and x == ord(pat[state]):
+        return state + 1
+    
+    # If it doesn't match, we need to figure out where to fall back to.
+    # We look for the longest prefix of the pattern that matches a suffix 
+    # of what we've seen so far.
+    for ns in range(state, 0, -1):
+        if ord(pat[ns-1]) == x:
+            is_prefix = True
+            for i in range(ns-1):
+                if pat[i] != pat[state - ns + 1 + i]:
+                    is_prefix = False
+                    break
+            if is_prefix:
+                return ns
+    return 0
+
+def compute_tf(pat, m):
+    # Create the 2D Transition Table (States x Characters)
+    TF = [[0 for i in range(NO_OF_CHARS)] for _ in range(m+1)]
+    for state in range(m+1):
+        for x in range(NO_OF_CHARS):
+            z = get_next_state(pat, m, state, x)
+            TF[state][x] = z
+    return TF
+
+def search_finite_automata(pat, txt):
+    m = len(pat)
+    n = len(txt)
+    
+    # Pre-process the pattern to build the machine
+    TF = compute_tf(pat, m)
+    
+    # Start at state 0
+    state = 0
+    for i in range(n):
+        # Update the state based on the current text character
+        state = TF[state][ord(txt[i])]
+        
+        # If we reach the final state, we found a match!
+        if state == m:
+            print(f"Finite Automata: Pattern found at index {i - m + 1}")
+
+# --- Driver Code ---
+text = "AABAACAADAABAABA"
+pattern = "AABA"
+search_finite_automata(pattern, text)
+# --- Driver Code ---
+text = "AABAACAADAABAABA"
+pattern = "AABA"
+search_rabin_karp(pattern, text)
+
+'''
+Part A: Rabin-Karp Algorithm
+
+1. Theory: The "Rolling Hash"
+Instead of comparing strings character by character, Rabin-Karp compares numbers (Hashes).
+
+    It calculates a mathematical "hash value" for the Pattern.
+
+    It calculates a hash value for a "window" of the Text (of the same length as the pattern).
+
+    If the hash values don't match, we immediately know the strings don't match. We slide the window over by one character.
+
+    The Magic: When we slide the window, we don't recalculate the hash from scratch. We subtract the value of the character that just fell out of the window, and add the value of the new character that just entered. This O(1) calculation is called a Rolling Hash.
+
+    Note: Sometimes two different strings can have the same hash value (a "collision"). So, if the hashes match, we still do a quick character-by-character check just to be 100% sure.
+. Complexity Analysis (Rabin-Karp)
+
+    Time Complexity: * Average/Best Case: O(n+m). The hash calculation is fast, and we only do the slow string comparison when we find a match.
+
+        Worst Case: O(n×m). This happens if the hash function is bad and creates "collisions" at every single step, forcing us to manually compare characters every time.
+
+    Space Complexity: O(1). We only store a few numerical variables for the hashes.
+
+Part B: Finite Automata (State Machine)
+
+1. Theory: The "State Transition"
+A Finite Automata (FA) builds a mini "State Machine" or flowchart specifically tailored to your pattern.
+
+    It pre-processes the pattern to create a 2D transition table.
+
+    The rows are "States" (from 0 up to m, where m is the length of the pattern).
+
+    The columns are every possible character in the alphabet.
+
+    As you read the text, you move from state to state based on the table.
+
+    If you ever reach state m, it means you successfully matched the whole pattern!
+
+    Complexity Analysis (Finite Automata)
+
+    Time Complexity: * Matching Time: O(n). Once the table is built, scanning the text is blazingly fast. We just look up the next state in the array. No backtracking on the text at all!
+
+        Preprocessing Time: O(m3×∣Σ∣) for the naive building approach shown above (where Σ is the alphabet size, usually 256). (There are O(m×∣Σ∣) optimized ways to build it, but the logic is much harder to explain in a lab viva).
+
+    Space Complexity: O(m×∣Σ∣). We need to store the entire 2D transition table in memory.
+
+To really see why Rabin-Karp is so clever, I've generated a visualizer below. You can watch how the "Rolling Window" slides across the text, and how it instantly knows to skip checking the characters if the hashes don't line up.
+
+
+'''
